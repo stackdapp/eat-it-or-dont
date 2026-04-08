@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eat It or Don't</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen" class="screen active">
+  <div class="auth-bg"></div>
+  <div class="auth-card">
+    <div class="logo-lockup">
+      <span class="logo-eat">eat it</span>
+      <span class="logo-or">or</span>
+      <span class="logo-dont">don't.</span>
+    </div>
+    <p class="auth-sub">meal planning for people who hate meal planning</p>
+    <button id="google-signin-btn" class="btn-google">
+      <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16.1 19 13 24 13c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.3 35.5 26.8 36.5 24 36.5c-5.2 0-9.6-3.3-11.2-7.9l-6.5 5C9.6 39.6 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.2 5.6l6.2 5.2C37 39.1 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+      Sign in with Google
+    </button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app-screen" class="screen">
+
+  <!-- SIDEBAR -->
+  <nav id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <span>eat it</span><br><em>or don't</em>
+      </div>
+      <div id="user-info">
+        <img id="user-avatar" src="" alt="">
+        <span id="user-name"></span>
+      </div>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#" class="nav-item active" data-view="recipes">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Recipe Book
+      </a></li>
+      <li><a href="#" class="nav-item" data-view="planner">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Meal Planner
+      </a></li>
+      <li><a href="#" class="nav-item" data-view="shopping">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        Shopping List
+      </a></li>
+    </ul>
+    <button id="signout-btn" class="btn-signout">Sign Out</button>
+  </nav>
+
+  <!-- CONTENT AREA -->
+  <main id="main-content">
+
+    <!-- ===== RECIPES VIEW ===== -->
+    <div id="view-recipes" class="view active">
+      <div class="view-header">
+        <h1>Recipe Book</h1>
+        <div class="header-actions">
+          <input type="text" id="recipe-search" placeholder="Search recipes..." class="search-input">
+          <button class="btn-primary" id="add-recipe-btn">+ Add Recipe</button>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="breakfast">Breakfast</button>
+        <button class="filter-btn" data-filter="lunch">Lunch</button>
+        <button class="filter-btn" data-filter="dinner">Dinner</button>
+        <button class="filter-btn" data-filter="snack">Snack</button>
+        <button class="filter-btn" data-filter="dessert">Dessert</button>
+      </div>
+
+      <div id="recipe-grid" class="recipe-grid">
+        <div class="empty-state">
+          <span class="empty-icon">🍽️</span>
+          <p>No recipes yet. Add your first one!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PLANNER VIEW ===== -->
+    <div id="view-planner" class="view">
+      <div class="view-header">
+        <h1>Meal Planner</h1>
+        <div class="header-actions">
+          <button class="btn-secondary" id="prev-week-btn">← Prev</button>
+          <span id="week-label" class="week-label"></span>
+          <button class="btn-secondary" id="next-week-btn">Next →</button>
+          <button class="btn-secondary" id="print-btn">🖨️ Print</button>
+        </div>
+      </div>
+      <div id="planner-grid" class="planner-grid"></div>
+    </div>
+
+    <!-- ===== SHOPPING VIEW ===== -->
+    <div id="view-shopping" class="view">
+      <div class="view-header">
+        <h1>Shopping List</h1>
+        <div class="header-actions">
+          <span id="shopping-week-range" class="week-label"></span>
+          <button class="btn-secondary" id="print-shopping-btn">🖨️ Print</button>
+          <button class="btn-danger" id="clear-checked-btn">Clear Checked</button>
+        </div>
+      </div>
+      <div class="shopping-layout">
+        <div id="shopping-list-container">
+          <div class="add-item-bar">
+            <input type="text" id="manual-item-input" placeholder="Add item manually..." class="search-input">
+            <button class="btn-primary" id="add-manual-item-btn">Add</button>
+          </div>
+          <div id="shopping-list"></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ===== RECIPE MODAL ===== -->
+<div id="recipe-modal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modal-title">Add Recipe</h2>
+      <button class="modal-close" id="close-recipe-modal">✕</button>
+    </div>
+    <div class="modal-tabs">
+      <button class="tab-btn active" data-tab="manual">Manual</button>
+      <button class="tab-btn" data-tab="import">Import from URL</button>
+    </div>
+
+    <!-- MANUAL TAB -->
+    <div id="tab-manual" class="tab-content active">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Recipe Name</label>
+          <input type="text" id="recipe-name" placeholder="e.g. Grandma's Lasagna">
+        </div>
+        <div class="form-group">
+          <label>Course</label>
+          <select id="recipe-course">
+            <option value="breakfast">Breakfast</option>
+            <option value="lunch">Lunch</option>
+            <option value="dinner" selected>Dinner</option>
+            <option value="snack">Snack</option>
+            <option value="dessert">Dessert</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Servings</label>
+          <input type="number" id="recipe-servings" value="4" min="1">
+        </div>
+        <div class="form-group">
+          <label>Prep Time (min)</label>
+          <input type="number" id="recipe-prep" value="15" min="0">
+        </div>
+        <div class="form-group">
+          <label>Cook Time (min)</label>
+          <input type="number" id="recipe-cook" value="30" min="0">
+        </div>
+        <div class="form-group full">
+          <label>Ingredients <small>(one per line, e.g. "2 cups flour")</small></label>
+          <textarea id="recipe-ingredients" rows="6" placeholder="2 cups flour&#10;1 tsp salt&#10;3 eggs"></textarea>
+        </div>
+        <div class="form-group full">
+          <label>Instructions <small>(one step per line)</small></label>
+          <textarea id="recipe-instructions" rows="6" placeholder="Step 1: Preheat oven to 350°F&#10;Step 2: Mix dry ingredients"></textarea>
+        </div>
+        <div class="form-group full">
+          <label>Notes (optional)</label>
+          <textarea id="recipe-notes" rows="2" placeholder="Tips, variations, etc."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="cancel-recipe-btn">Cancel</button>
+        <button class="btn-primary" id="save-recipe-btn">Save Recipe</button>
+      </div>
+    </div>
+
+    <!-- IMPORT TAB -->
+    <div id="tab-import" class="tab-content">
+      <div class="form-group full">
+        <label>Recipe URL</label>
+        <input type="url" id="import-url" placeholder="https://www.anyrecipesite.com/recipe/...">
+      </div>
+      <p class="import-note">Paste a URL from any recipe website. Claude AI will extract the recipe details automatically.</p>
+      <div id="import-status" class="import-status"></div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="cancel-import-btn">Cancel</button>
+        <button class="btn-primary" id="import-recipe-btn">Import Recipe</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== RECIPE DETAIL MODAL ===== -->
+<div id="recipe-detail-modal" class="modal-overlay">
+  <div class="modal modal-large">
+    <div class="modal-header">
+      <h2 id="detail-title"></h2>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn-secondary btn-sm" id="edit-recipe-btn">Edit</button>
+        <button class="btn-danger btn-sm" id="delete-recipe-btn">Delete</button>
+        <button class="modal-close" id="close-detail-modal">✕</button>
+      </div>
+    </div>
+    <div id="detail-meta" class="detail-meta"></div>
+    <div class="detail-body">
+      <div class="detail-col">
+        <h3>Ingredients</h3>
+        <ul id="detail-ingredients" class="ingredient-list"></ul>
+      </div>
+      <div class="detail-col">
+        <h3>Instructions</h3>
+        <ol id="detail-instructions" class="instruction-list"></ol>
+        <div id="detail-notes" class="detail-notes"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADD TO PLANNER MODAL ===== -->
+<div id="planner-modal" class="modal-overlay">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <h2 id="planner-modal-title">Add to Planner</h2>
+      <button class="modal-close" id="close-planner-modal">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Select Recipe</label>
+      <select id="planner-recipe-select"></select>
+    </div>
+    <div class="form-group">
+      <label>Meal Time</label>
+      <select id="planner-mealtime-select">
+        <option value="breakfast">Breakfast</option>
+        <option value="lunch">Lunch</option>
+        <option value="dinner" selected>Dinner</option>
+        <option value="snack">Snack</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" id="cancel-planner-btn">Cancel</button>
+      <button class="btn-primary" id="save-planner-btn">Add to Plan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, onSnapshot, query, where }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDUuOfDebFCGSM1K0Ci04re5LDw8VzOfK4",
+    authDomain: "eat-it-or-dont.firebaseapp.com",
+    projectId: "eat-it-or-dont",
+    storageBucket: "eat-it-or-dont.firebasestorage.app",
+    messagingSenderId: "123859441451",
+    appId: "1:123859441451:web:e975e2011b019c5fd9d76e"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const provider = new GoogleAuthProvider();
+
+  // ── State ──────────────────────────────────────────────
+  let currentUser = null;
+  let recipes = {};
+  let plannerData = {};
+  let shoppingItems = [];
+  let currentWeekStart = getMonday(new Date());
+  let editingRecipeId = null;
+  let plannerTargetDate = null;
+
+  // ── Auth ───────────────────────────────────────────────
+  document.getElementById('google-signin-btn').addEventListener('click', () => {
+    signInWithPopup(auth, provider).catch(console.error);
+  });
+
+  document.getElementById('signout-btn').addEventListener('click', () => {
+    signOut(auth);
+  });
+
+  onAuthStateChanged(auth, user => {
+    if (user) {
+      currentUser = user;
+      document.getElementById('auth-screen').classList.remove('active');
+      document.getElementById('app-screen').classList.add('active');
+      document.getElementById('user-avatar').src = user.photoURL || '';
+      document.getElementById('user-name').textContent = user.displayName?.split(' ')[0] || '';
+      loadData();
+    } else {
+      currentUser = null;
+      document.getElementById('auth-screen').classList.add('active');
+      document.getElementById('app-screen').classList.remove('active');
+    }
+  });
+
+  // ── Data Loading ───────────────────────────────────────
+  function loadData() {
+    // Recipes
+    const recipesRef = collection(db, 'users', currentUser.uid, 'recipes');
+    onSnapshot(recipesRef, snap => {
+      recipes = {};
+      snap.forEach(d => { recipes[d.id] = d.data(); });
+      renderRecipes();
+      refreshShoppingList();
+    });
+
+    // Planner
+    const plannerRef = collection(db, 'users', currentUser.uid, 'planner');
+    onSnapshot(plannerRef, snap => {
+      plannerData = {};
+      snap.forEach(d => { plannerData[d.id] = d.data(); });
+      renderPlanner();
+      refreshShoppingList();
+    });
+
+    // Shopping extras
+    const shoppingRef = doc(db, 'users', currentUser.uid, 'shopping', 'extras');
+    onSnapshot(shoppingRef, snap => {
+      shoppingItems = snap.exists() ? (snap.data().items || []) : [];
+      refreshShoppingList();
+    });
+  }
+
+  // ── Navigation ─────────────────────────────────────────
+  document.querySelectorAll('.nav-item').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      document.querySelectorAll('.nav-item').forEach(l => l.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      link.classList.add('active');
+      document.getElementById('view-' + link.dataset.view).classList.add('active');
+    });
+  });
+
+  // ── Recipes ────────────────────────────────────────────
+  let activeFilter = 'all';
+  let searchTerm = '';
+
+  document.getElementById('add-recipe-btn').addEventListener('click', () => openRecipeModal());
+  document.getElementById('cancel-recipe-btn').addEventListener('click', closeRecipeModal);
+  document.getElementById('cancel-import-btn').addEventListener('click', closeRecipeModal);
+  document.getElementById('close-recipe-modal').addEventListener('click', closeRecipeModal);
+
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeFilter = btn.dataset.filter;
+      renderRecipes();
+    });
+  });
+
+  document.getElementById('recipe-search').addEventListener('input', e => {
+    searchTerm = e.target.value.toLowerCase();
+    renderRecipes();
+  });
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  function openRecipeModal(recipeId = null) {
+    editingRecipeId = recipeId;
+    document.getElementById('modal-title').textContent = recipeId ? 'Edit Recipe' : 'Add Recipe';
+    if (recipeId && recipes[recipeId]) {
+      const r = recipes[recipeId];
+      document.getElementById('recipe-name').value = r.name || '';
+      document.getElementById('recipe-course').value = r.course || 'dinner';
+      document.getElementById('recipe-servings').value = r.servings || 4;
+      document.getElementById('recipe-prep').value = r.prepTime || 0;
+      document.getElementById('recipe-cook').value = r.cookTime || 0;
+      document.getElementById('recipe-ingredients').value = (r.ingredients || []).join('\n');
+      document.getElementById('recipe-instructions').value = (r.instructions || []).join('\n');
+      document.getElementById('recipe-notes').value = r.notes || '';
+    } else {
+      document.getElementById('recipe-name').value = '';
+      document.getElementById('recipe-course').value = 'dinner';
+      document.getElementById('recipe-servings').value = 4;
+      document.getElementById('recipe-prep').value = 15;
+      document.getElementById('recipe-cook').value = 30;
+      document.getElementById('recipe-ingredients').value = '';
+      document.getElementById('recipe-instructions').value = '';
+      document.getElementById('recipe-notes').value = '';
+    }
+    // reset to manual tab
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelector('.tab-btn[data-tab="manual"]').classList.add('active');
+    document.getElementById('tab-manual').classList.add('active');
+    document.getElementById('recipe-modal').classList.add('active');
+  }
+
+  function closeRecipeModal() {
+    document.getElementById('recipe-modal').classList.remove('active');
+    editingRecipeId = null;
+  }
+
+  document.getElementById('save-recipe-btn').addEventListener('click', async () => {
+    const name = document.getElementById('recipe-name').value.trim();
+    if (!name) { alert('Recipe name is required.'); return; }
+    const recipe = {
+      name,
+      course: document.getElementById('recipe-course').value,
+      servings: parseInt(document.getElementById('recipe-servings').value) || 4,
+      prepTime: parseInt(document.getElementById('recipe-prep').value) || 0,
+      cookTime: parseInt(document.getElementById('recipe-cook').value) || 0,
+      ingredients: document.getElementById('recipe-ingredients').value.split('\n').map(s=>s.trim()).filter(Boolean),
+      instructions: document.getElementById('recipe-instructions').value.split('\n').map(s=>s.trim()).filter(Boolean),
+      notes: document.getElementById('recipe-notes').value.trim(),
+      createdAt: editingRecipeId ? (recipes[editingRecipeId]?.createdAt || Date.now()) : Date.now()
+    };
+    const id = editingRecipeId || 'r_' + Date.now();
+    await setDoc(doc(db, 'users', currentUser.uid, 'recipes', id), recipe);
+    closeRecipeModal();
+  });
+
+  // Import via Claude API
+  document.getElementById('import-recipe-btn').addEventListener('click', async () => {
+    const url = document.getElementById('import-url').value.trim();
+    if (!url) { alert('Please enter a URL.'); return; }
+    const status = document.getElementById('import-status');
+    status.textContent = '⏳ Fetching recipe...';
+    status.className = 'import-status loading';
+
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          tools: [{ type: "web_search_20250305", name: "web_search" }],
+          messages: [{
+            role: "user",
+            content: `Visit this URL and extract the recipe: ${url}
+Return ONLY a JSON object with these fields:
+{
+  "name": "Recipe Name",
+  "course": "breakfast|lunch|dinner|snack|dessert",
+  "servings": 4,
+  "prepTime": 15,
+  "cookTime": 30,
+  "ingredients": ["ingredient 1", "ingredient 2"],
+  "instructions": ["Step 1", "Step 2"],
+  "notes": ""
+}
+No explanation, no markdown, just the JSON object.`
+          }]
+        })
+      });
+
+      const data = await response.json();
+      const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+      const clean = text.replace(/```json|```/g, '').trim();
+      const recipe = JSON.parse(clean);
+      recipe.createdAt = Date.now();
+
+      const id = 'r_' + Date.now();
+      await setDoc(doc(db, 'users', currentUser.uid, 'recipes', id), recipe);
+      status.textContent = '✅ Recipe imported!';
+      status.className = 'import-status success';
+      setTimeout(closeRecipeModal, 1200);
+    } catch (err) {
+      status.textContent = '❌ Import failed. Try adding manually.';
+      status.className = 'import-status error';
+      console.error(err);
+    }
+  });
+
+  function renderRecipes() {
+    const grid = document.getElementById('recipe-grid');
+    let filtered = Object.entries(recipes);
+    if (activeFilter !== 'all') filtered = filtered.filter(([,r]) => r.course === activeFilter);
+    if (searchTerm) filtered = filtered.filter(([,r]) => r.name.toLowerCase().includes(searchTerm));
+
+    if (!filtered.length) {
+      grid.innerHTML = `<div class="empty-state"><span class="empty-icon">🍽️</span><p>${searchTerm ? 'No recipes match your search.' : 'No recipes yet. Add your first one!'}</p></div>`;
+      return;
+    }
+
+    grid.innerHTML = filtered.map(([id, r]) => `
+      <div class="recipe-card" data-id="${id}">
+        <div class="recipe-card-course">${r.course}</div>
+        <h3 class="recipe-card-name">${r.name}</h3>
+        <div class="recipe-card-meta">
+          ${r.prepTime ? `<span>⏱ ${r.prepTime + r.cookTime} min</span>` : ''}
+          <span>👤 ${r.servings} servings</span>
+        </div>
+      </div>
+    `).join('');
+
+    grid.querySelectorAll('.recipe-card').forEach(card => {
+      card.addEventListener('click', () => openRecipeDetail(card.dataset.id));
+    });
+  }
+
+  // ── Recipe Detail ──────────────────────────────────────
+  let detailRecipeId = null;
+
+  function openRecipeDetail(id) {
+    detailRecipeId = id;
+    const r = recipes[id];
+    if (!r) return;
+    document.getElementById('detail-title').textContent = r.name;
+    document.getElementById('detail-meta').innerHTML = `
+      <span class="badge">${r.course}</span>
+      ${r.prepTime ? `<span class="badge">Prep: ${r.prepTime}min</span>` : ''}
+      ${r.cookTime ? `<span class="badge">Cook: ${r.cookTime}min</span>` : ''}
+      <span class="badge">Serves ${r.servings}</span>
+    `;
+    document.getElementById('detail-ingredients').innerHTML =
+      (r.ingredients || []).map(i => `<li>${i}</li>`).join('');
+    document.getElementById('detail-instructions').innerHTML =
+      (r.instructions || []).map(s => `<li>${s}</li>`).join('');
+    document.getElementById('detail-notes').innerHTML = r.notes ? `<p><strong>Notes:</strong> ${r.notes}</p>` : '';
+    document.getElementById('recipe-detail-modal').classList.add('active');
+  }
+
+  document.getElementById('close-detail-modal').addEventListener('click', () => {
+    document.getElementById('recipe-detail-modal').classList.remove('active');
+  });
+
+  document.getElementById('edit-recipe-btn').addEventListener('click', () => {
+    document.getElementById('recipe-detail-modal').classList.remove('active');
+    openRecipeModal(detailRecipeId);
+  });
+
+  document.getElementById('delete-recipe-btn').addEventListener('click', async () => {
+    if (!confirm('Delete this recipe?')) return;
+    await deleteDoc(doc(db, 'users', currentUser.uid, 'recipes', detailRecipeId));
+    document.getElementById('recipe-detail-modal').classList.remove('active');
+  });
+
+  // ── Planner ────────────────────────────────────────────
+  const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MEALS = ['breakfast','lunch','dinner','snack'];
+
+  document.getElementById('prev-week-btn').addEventListener('click', () => {
+    currentWeekStart = new Date(currentWeekStart);
+    currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+    renderPlanner();
+  });
+
+  document.getElementById('next-week-btn').addEventListener('click', () => {
+    currentWeekStart = new Date(currentWeekStart);
+    currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+    renderPlanner();
+  });
+
+  document.getElementById('print-btn').addEventListener('click', () => {
+    document.body.classList.add('print-mode');
+    window.print();
+    document.body.classList.remove('print-mode');
+  });
+
+  document.getElementById('print-shopping-btn').addEventListener('click', () => {
+    document.body.classList.add('print-shopping');
+    window.print();
+    document.body.classList.remove('print-shopping');
+  });
+
+  function getMonday(d) {
+    const date = new Date(d);
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+    date.setDate(diff);
+    date.setHours(0,0,0,0);
+    return date;
+  }
+
+  function dateKey(date) {
+    return date.toISOString().split('T')[0];
+  }
+
+  function renderPlanner() {
+    const grid = document.getElementById('planner-grid');
+    const weekDates = Array.from({length:7}, (_,i) => {
+      const d = new Date(currentWeekStart);
+      d.setDate(d.getDate() + i);
+      return d;
+    });
+
+    const start = weekDates[0];
+    const end = weekDates[6];
+    document.getElementById('week-label').textContent =
+      `${start.toLocaleDateString('en-US',{month:'short',day:'numeric'})} – ${end.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;
+    document.getElementById('shopping-week-range').textContent =
+      `${start.toLocaleDateString('en-US',{month:'short',day:'numeric'})} – ${end.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;
+
+    grid.innerHTML = `
+      <div class="planner-header-row">
+        ${weekDates.map(d => `
+          <div class="planner-day-header">
+            <span class="day-name">${DAYS[d.getDay()]}</span>
+            <span class="day-num">${d.getDate()}</span>
+          </div>
+        `).join('')}
+      </div>
+      ${MEALS.map(meal => `
+        <div class="planner-meal-row">
+          <div class="meal-label">${meal}</div>
+          <div class="planner-cells">
+            ${weekDates.map(d => {
+              const key = dateKey(d) + '_' + meal;
+              const entry = plannerData[key];
+              const recipe = entry ? recipes[entry.recipeId] : null;
+              return `
+                <div class="planner-cell" data-date="${dateKey(d)}" data-meal="${meal}">
+                  ${recipe ? `
+                    <div class="planner-entry" data-key="${key}">
+                      <span>${recipe.name}</span>
+                      <button class="remove-plan-btn" data-key="${key}">✕</button>
+                    </div>
+                  ` : `
+                    <button class="add-plan-btn" data-date="${dateKey(d)}" data-meal="${meal}">+</button>
+                  `}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `).join('')}
+    `;
+
+    grid.querySelectorAll('.add-plan-btn').forEach(btn => {
+      btn.addEventListener('click', () => openPlannerModal(btn.dataset.date, btn.dataset.meal));
+    });
+
+    grid.querySelectorAll('.remove-plan-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        await deleteDoc(doc(db, 'users', currentUser.uid, 'planner', btn.dataset.key));
+      });
+    });
+  }
+
+  function openPlannerModal(date, meal) {
+    plannerTargetDate = date;
+    document.getElementById('planner-modal-title').textContent =
+      `Add to ${meal.charAt(0).toUpperCase()+meal.slice(1)} — ${new Date(date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}`;
+    document.getElementById('planner-mealtime-select').value = meal;
+
+    const sel = document.getElementById('planner-recipe-select');
+    sel.innerHTML = Object.entries(recipes)
+      .sort((a,b) => a[1].name.localeCompare(b[1].name))
+      .map(([id,r]) => `<option value="${id}">${r.name}</option>`).join('');
+
+    document.getElementById('planner-modal').classList.add('active');
+  }
+
+  document.getElementById('close-planner-modal').addEventListener('click', () => {
+    document.getElementById('planner-modal').classList.remove('active');
+  });
+  document.getElementById('cancel-planner-btn').addEventListener('click', () => {
+    document.getElementById('planner-modal').classList.remove('active');
+  });
+
+  document.getElementById('save-planner-btn').addEventListener('click', async () => {
+    const recipeId = document.getElementById('planner-recipe-select').value;
+    const meal = document.getElementById('planner-mealtime-select').value;
+    if (!recipeId) return;
+    const key = plannerTargetDate + '_' + meal;
+    await setDoc(doc(db, 'users', currentUser.uid, 'planner', key), { recipeId, date: plannerTargetDate, meal });
+    document.getElementById('planner-modal').classList.remove('active');
+  });
+
+  // ── Shopping List ──────────────────────────────────────
+  function refreshShoppingList() {
+    const weekDates = Array.from({length:7}, (_,i) => {
+      const d = new Date(currentWeekStart);
+      d.setDate(d.getDate() + i);
+      return dateKey(d);
+    });
+
+    // Aggregate ingredients from planned recipes this week
+    const ingredientMap = {};
+    weekDates.forEach(date => {
+      MEALS.forEach(meal => {
+        const key = date + '_' + meal;
+        const entry = plannerData[key];
+        if (entry && recipes[entry.recipeId]) {
+          (recipes[entry.recipeId].ingredients || []).forEach(ing => {
+            const lower = ing.toLowerCase();
+            ingredientMap[lower] = { text: ing, checked: false };
+          });
+        }
+      });
+    });
+
+    renderShoppingList(ingredientMap);
+  }
+
+  function renderShoppingList(ingredientMap) {
+    const container = document.getElementById('shopping-list');
+    const autoItems = Object.values(ingredientMap);
+
+    if (!autoItems.length && !shoppingItems.length) {
+      container.innerHTML = `<div class="empty-state"><span class="empty-icon">🛒</span><p>Plan some meals to auto-generate your list!</p></div>`;
+      return;
+    }
+
+    let html = '';
+    if (autoItems.length) {
+      html += `<div class="shopping-section"><h3>From Your Meal Plan</h3>`;
+      html += autoItems.map((item, i) => `
+        <label class="shopping-item">
+          <input type="checkbox" class="shop-check" data-index="${i}" ${item.checked ? 'checked' : ''}>
+          <span class="${item.checked ? 'checked' : ''}">${item.text}</span>
+        </label>
+      `).join('');
+      html += '</div>';
+    }
+
+    if (shoppingItems.length) {
+      html += `<div class="shopping-section"><h3>Extra Items</h3>`;
+      html += shoppingItems.map((item, i) => `
+        <label class="shopping-item">
+          <input type="checkbox" class="extra-check" data-index="${i}" ${item.checked ? 'checked' : ''}>
+          <span class="${item.checked ? 'checked' : ''}">${item.text}</span>
+          <button class="remove-extra-btn" data-index="${i}">✕</button>
+        </label>
+      `).join('');
+      html += '</div>';
+    }
+
+    container.innerHTML = html;
+
+    container.querySelectorAll('.extra-check').forEach(cb => {
+      cb.addEventListener('change', async () => {
+        shoppingItems[cb.dataset.index].checked = cb.checked;
+        await saveShoppingExtras();
+      });
+    });
+
+    container.querySelectorAll('.remove-extra-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        shoppingItems.splice(btn.dataset.index, 1);
+        await saveShoppingExtras();
+      });
+    });
+  }
+
+  async function saveShoppingExtras() {
+    await setDoc(doc(db, 'users', currentUser.uid, 'shopping', 'extras'), { items: shoppingItems });
+  }
+
+  document.getElementById('add-manual-item-btn').addEventListener('click', async () => {
+    const input = document.getElementById('manual-item-input');
+    const text = input.value.trim();
+    if (!text) return;
+    shoppingItems.push({ text, checked: false });
+    await saveShoppingExtras();
+    input.value = '';
+  });
+
+  document.getElementById('manual-item-input').addEventListener('keydown', async (e) => {
+    if (e.key === 'Enter') document.getElementById('add-manual-item-btn').click();
+  });
+
+  document.getElementById('clear-checked-btn').addEventListener('click', async () => {
+    shoppingItems = shoppingItems.filter(i => !i.checked);
+    await saveShoppingExtras();
+  });
+
+  // Close modals on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) overlay.classList.remove('active');
+    });
+  });
+
+</script>
+<script src="app.js"></script>
+</body>
+</html>

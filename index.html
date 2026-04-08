@@ -853,17 +853,15 @@ No explanation, no markdown, just the JSON object.`
   }
 
   function showCSVPreview(raw) {
-    const lines = raw.trim().split('\n').filter(Boolean);
-    const headers = lines[0].split(',').map(h => h.replace(/"/g,'').trim());
-    const rowCount = lines.length - 1;
-    document.getElementById('csv-preview-count').textContent = `${rowCount} recipe${rowCount !== 1 ? 's' : ''} detected — columns: ${headers.join(', ')}`;
+    const rows = parseCSVToObjects(raw);
+    const rowCount = rows.length;
+    const headers = rows.length ? Object.keys(rows[0]) : [];
+    document.getElementById('csv-preview-count').textContent = `${rowCount} recipe${rowCount !== 1 ? 's' : ''} detected — columns: ${headers.slice(0,6).join(', ')}${headers.length > 6 ? '…' : ''}`;
     document.getElementById('csv-preview').style.display = 'block';
 
-    // Show first 3 rows as preview
-    const preview = lines.slice(1, 4).map(line => {
-      const vals = parseCSVLine(line);
-      return headers.map((h, i) => `<span class="csv-cell"><strong>${h}:</strong> ${(vals[i]||'').substring(0,40)}${(vals[i]||'').length > 40 ? '…' : ''}</span>`).join('');
-    });
+    const preview = rows.slice(0, 3).map(row =>
+      headers.slice(0, 5).map(h => `<span class="csv-cell"><strong>${h}:</strong> ${(row[h]||'').substring(0,40)}${(row[h]||'').length > 40 ? '…' : ''}</span>`).join('')
+    );
     document.getElementById('csv-preview-list').innerHTML = preview.map(r => `<div class="csv-row">${r}</div>`).join('');
   }
 
@@ -997,12 +995,58 @@ ${raw.substring(0, 8000)}`
     URL.revokeObjectURL(url);
   });
 
+  // Proper CSV parser — handles newlines inside quoted fields
+  function parseCSVToObjects(raw) {
+    const fields = [];
+    let cur = '';
+    let inQ = false;
+    let i = 0;
+    while (i < raw.length) {
+      const ch = raw[i];
+      if (ch === '"') {
+        if (inQ && raw[i+1] === '"') { cur += '"'; i += 2; continue; } // escaped quote
+        inQ = !inQ; i++; continue;
+      }
+      if (ch === ',' && !inQ) { fields.push(cur); cur = ''; i++; continue; }
+      if ((ch === '\n' || ch === '\r') && !inQ) {
+        if (ch === '\r' && raw[i+1] === '\n') i++;
+        fields.push(cur); cur = ''; i++;
+        continue;
+      }
+      cur += ch; i++;
+    }
+    if (cur || fields.length) fields.push(cur);
+
+    // First row = headers
+    let headerEnd = 0;
+    const rawLines = raw.split('\n');
+    const headers = parseCSVLine(rawLines[0]);
+
+    // Now chunk fields into rows using header count
+    const colCount = headers.length;
+    const rows = [];
+    // Re-parse properly using the tokenized fields array
+    // fields[0..colCount-1] = header row, skip it
+    for (let r = colCount; r < fields.length; r += colCount) {
+      if (r + colCount > fields.length + colCount) break;
+      const obj = {};
+      for (let c = 0; c < colCount; c++) {
+        obj[headers[c]] = (fields[r + c] || '').trim();
+      }
+      if (Object.values(obj).some(v => v)) rows.push(obj);
+    }
+    return rows;
+  }
+
   function parseCSVLine(line) {
     const result = [];
     let current = '';
     let inQuotes = false;
     for (let i = 0; i < line.length; i++) {
-      if (line[i] === '"') { inQuotes = !inQuotes; continue; }
+      if (line[i] === '"') {
+        if (inQuotes && line[i+1] === '"') { current += '"'; i++; continue; }
+        inQuotes = !inQuotes; continue;
+      }
       if (line[i] === ',' && !inQuotes) { result.push(current.trim()); current = ''; continue; }
       current += line[i];
     }

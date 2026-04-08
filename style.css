@@ -734,6 +734,84 @@ body {
   color: var(--text-muted);
 }
 
+/* ── CSV Import ───────────────────────────────────────── */
+.csv-drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 16px;
+}
+.csv-drop-zone.drag-over {
+  border-color: var(--accent);
+  background: rgba(232,197,71,0.05);
+}
+.csv-drop-icon { font-size: 2.5rem; display: block; margin-bottom: 10px; }
+.csv-drop-zone p { color: var(--text-muted); font-size: 0.875rem; }
+.csv-drop-sub { font-size: 0.75rem; margin-top: 6px; color: var(--accent); }
+.csv-browse-link {
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.csv-preview {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.csv-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 0.8rem;
+  color: var(--accent);
+  font-weight: 500;
+}
+.csv-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+}
+.csv-row:last-child { border-bottom: none; }
+.csv-cell { color: var(--text-muted); }
+.csv-cell strong { color: var(--text); }
+
+.template-info { margin-bottom: 16px; }
+.template-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+.template-table th {
+  text-align: left;
+  padding: 8px 10px;
+  background: var(--surface2);
+  color: var(--accent);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+}
+.template-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+  vertical-align: top;
+}
+.template-table td:first-child { color: var(--text); font-weight: 500; font-family: monospace; font-size: 0.8rem; }
+.template-table tr:last-child td { border-bottom: none; }
+
 /* ── Print Styles ─────────────────────────────────────── */
 @media print {
   body { background: white; color: black; }

@@ -67,6 +67,7 @@
         <h1>Recipe Book</h1>
         <div class="header-actions">
           <input type="text" id="recipe-search" placeholder="Search recipes..." class="search-input">
+          <button class="btn-secondary" id="csv-import-btn">⬆ Import CSV</button>
           <button class="btn-primary" id="add-recipe-btn">+ Add Recipe</button>
         </div>
       </div>
@@ -784,6 +785,194 @@ No explanation, no markdown, just the JSON object.`
     await saveShoppingExtras();
   });
 
+  // ── CSV Import ─────────────────────────────────────────
+  let csvRawData = null;
+
+  document.getElementById('csv-import-btn').addEventListener('click', () => {
+    csvRawData = null;
+    document.getElementById('csv-filename').textContent = 'No file selected';
+    document.getElementById('csv-preview').style.display = 'none';
+    document.getElementById('csv-status').className = 'import-status';
+    document.getElementById('csv-status').textContent = '';
+    document.getElementById('process-csv-btn').disabled = true;
+    // reset to upload tab
+    document.querySelectorAll('#csv-modal .tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#csv-modal .tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelector('#csv-modal .tab-btn[data-tab="csv-upload"]').classList.add('active');
+    document.getElementById('tab-csv-upload').classList.add('active');
+    document.getElementById('csv-modal').classList.add('active');
+  });
+
+  document.getElementById('close-csv-modal').addEventListener('click', () => {
+    document.getElementById('csv-modal').classList.remove('active');
+  });
+  document.getElementById('cancel-csv-btn').addEventListener('click', () => {
+    document.getElementById('csv-modal').classList.remove('active');
+  });
+  document.getElementById('cancel-csv-template-btn').addEventListener('click', () => {
+    document.getElementById('csv-modal').classList.remove('active');
+  });
+
+  // Tab switching inside CSV modal
+  document.querySelectorAll('#csv-modal .tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#csv-modal .tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('#csv-modal .tab-content').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // File input
+  document.getElementById('csv-file-input').addEventListener('change', e => {
+    handleCSVFile(e.target.files[0]);
+  });
+
+  // Drag and drop
+  const dropZone = document.getElementById('csv-drop-zone');
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.name.endsWith('.csv')) handleCSVFile(file);
+    else alert('Please drop a .csv file.');
+  });
+
+  function handleCSVFile(file) {
+    if (!file) return;
+    document.getElementById('csv-filename').textContent = file.name;
+    const reader = new FileReader();
+    reader.onload = e => {
+      csvRawData = e.target.result;
+      showCSVPreview(csvRawData);
+      document.getElementById('process-csv-btn').disabled = false;
+    };
+    reader.readAsText(file);
+  }
+
+  function showCSVPreview(raw) {
+    const lines = raw.trim().split('\n').filter(Boolean);
+    const headers = lines[0].split(',').map(h => h.replace(/"/g,'').trim());
+    const rowCount = lines.length - 1;
+    document.getElementById('csv-preview-count').textContent = `${rowCount} recipe${rowCount !== 1 ? 's' : ''} detected — columns: ${headers.join(', ')}`;
+    document.getElementById('csv-preview').style.display = 'block';
+
+    // Show first 3 rows as preview
+    const preview = lines.slice(1, 4).map(line => {
+      const vals = parseCSVLine(line);
+      return headers.map((h, i) => `<span class="csv-cell"><strong>${h}:</strong> ${(vals[i]||'').substring(0,40)}${(vals[i]||'').length > 40 ? '…' : ''}</span>`).join('');
+    });
+    document.getElementById('csv-preview-list').innerHTML = preview.map(r => `<div class="csv-row">${r}</div>`).join('');
+  }
+
+  document.getElementById('csv-clear-btn').addEventListener('click', () => {
+    csvRawData = null;
+    document.getElementById('csv-filename').textContent = 'No file selected';
+    document.getElementById('csv-preview').style.display = 'none';
+    document.getElementById('process-csv-btn').disabled = true;
+    document.getElementById('csv-file-input').value = '';
+  });
+
+  document.getElementById('process-csv-btn').addEventListener('click', async () => {
+    if (!csvRawData) return;
+    const status = document.getElementById('csv-status');
+    const btn = document.getElementById('process-csv-btn');
+    btn.disabled = true;
+    status.textContent = '⏳ Claude is mapping your CSV columns…';
+    status.className = 'import-status loading';
+
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          messages: [{
+            role: "user",
+            content: `I have a CSV of recipes. Map each row to this exact JSON structure and return ONLY a JSON array, no markdown, no explanation:
+[{
+  "name": string,
+  "course": "breakfast"|"lunch"|"dinner"|"snack"|"dessert",
+  "servings": number,
+  "prepTime": number (minutes),
+  "cookTime": number (minutes),
+  "ingredients": [string],
+  "instructions": [string],
+  "notes": string
+}]
+
+Rules:
+- ingredients and instructions: if pipe-separated in CSV, split on |. If a single string, put it as one element.
+- course: map to closest valid value. Default "dinner" if unclear.
+- servings/prepTime/cookTime: default to 4/15/30 if missing or non-numeric.
+- notes: empty string if missing.
+
+CSV data:
+${csvRawData.substring(0, 8000)}`
+          }]
+        })
+      });
+
+      const data = await response.json();
+      const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+      const clean = text.replace(/```json|```/g, '').trim();
+      const recipes_to_import = JSON.parse(clean);
+
+      if (!Array.isArray(recipes_to_import) || !recipes_to_import.length) throw new Error('No recipes parsed');
+
+      status.textContent = `⏳ Saving ${recipes_to_import.length} recipes…`;
+
+      let saved = 0;
+      for (const recipe of recipes_to_import) {
+        if (!recipe.name) continue;
+        recipe.createdAt = Date.now() + saved;
+        const id = 'r_' + Date.now() + '_' + saved;
+        await setDoc(doc(db, 'users', currentUser.uid, 'recipes', id), recipe);
+        saved++;
+      }
+
+      status.textContent = `✅ ${saved} recipe${saved !== 1 ? 's' : ''} imported successfully!`;
+      status.className = 'import-status success';
+      setTimeout(() => document.getElementById('csv-modal').classList.remove('active'), 1800);
+    } catch (err) {
+      status.textContent = '❌ Import failed. Check your CSV format or try the template.';
+      status.className = 'import-status error';
+      btn.disabled = false;
+      console.error(err);
+    }
+  });
+
+  // Template download
+  document.getElementById('download-template-btn').addEventListener('click', () => {
+    const header = 'name,course,servings,prep_time,cook_time,ingredients,instructions,notes';
+    const example1 = '"Spaghetti Carbonara","dinner",4,10,20,"200g pasta|100g pancetta|2 eggs|50g parmesan|black pepper","Boil pasta al dente|Fry pancetta until crispy|Mix eggs and parmesan|Combine off heat|Season and serve","Use guanciale for authentic flavor"';
+    const example2 = '"Overnight Oats","breakfast",2,5,0,"1 cup oats|1 cup milk|2 tbsp chia seeds|1 tbsp honey|berries to top","Mix oats milk chia and honey|Refrigerate overnight|Top with berries and serve","Can prep 5 days ahead"';
+    const csv = [header, example1, example2].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'eat-it-or-dont-recipe-template.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  function parseCSVLine(line) {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      if (line[i] === '"') { inQuotes = !inQuotes; continue; }
+      if (line[i] === ',' && !inQuotes) { result.push(current.trim()); current = ''; continue; }
+      current += line[i];
+    }
+    result.push(current.trim());
+    return result;
+  }
+
   // Close modals on overlay click
   document.querySelectorAll('.modal-overlay').forEach(overlay => {
     overlay.addEventListener('click', e => {
@@ -792,6 +981,73 @@ No explanation, no markdown, just the JSON object.`
   });
 
 </script>
+<!-- ===== CSV IMPORT MODAL ===== -->
+<div id="csv-modal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Import Recipes via CSV</h2>
+      <button class="modal-close" id="close-csv-modal">✕</button>
+    </div>
+    <div class="modal-tabs">
+      <button class="tab-btn active" data-tab="csv-upload">Upload CSV</button>
+      <button class="tab-btn" data-tab="csv-template">Get Template</button>
+    </div>
+
+    <!-- UPLOAD TAB -->
+    <div id="tab-csv-upload" class="tab-content active">
+      <p class="import-note">Upload any CSV with recipe data — Claude AI will automatically map your columns to the right fields, even if they don't match exactly.</p>
+      <div class="csv-drop-zone" id="csv-drop-zone">
+        <span class="csv-drop-icon">📄</span>
+        <p>Drop your CSV here or <label for="csv-file-input" class="csv-browse-link">browse</label></p>
+        <input type="file" id="csv-file-input" accept=".csv" style="display:none">
+        <p class="csv-drop-sub" id="csv-filename">No file selected</p>
+      </div>
+      <div id="csv-preview" class="csv-preview" style="display:none">
+        <div class="csv-preview-header">
+          <span id="csv-preview-count"></span>
+          <button class="btn-secondary btn-sm" id="csv-clear-btn">Clear</button>
+        </div>
+        <div id="csv-preview-list"></div>
+      </div>
+      <div id="csv-status" class="import-status"></div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="cancel-csv-btn">Cancel</button>
+        <button class="btn-primary" id="process-csv-btn" disabled>Process with AI</button>
+      </div>
+    </div>
+
+    <!-- TEMPLATE TAB -->
+    <div id="tab-csv-template" class="tab-content">
+      <p class="import-note">Download our template CSV with the correct column headers, fill it in, then upload it.</p>
+      <div class="template-info">
+        <table class="template-table">
+          <thead>
+            <tr>
+              <th>Column</th>
+              <th>Description</th>
+              <th>Example</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>name</td><td>Recipe name (required)</td><td>Grandma's Lasagna</td></tr>
+            <tr><td>course</td><td>breakfast / lunch / dinner / snack / dessert</td><td>dinner</td></tr>
+            <tr><td>servings</td><td>Number of servings</td><td>6</td></tr>
+            <tr><td>prep_time</td><td>Prep time in minutes</td><td>20</td></tr>
+            <tr><td>cook_time</td><td>Cook time in minutes</td><td>45</td></tr>
+            <tr><td>ingredients</td><td>Ingredients separated by | (pipe)</td><td>2 cups flour|1 tsp salt|3 eggs</td></tr>
+            <tr><td>instructions</td><td>Steps separated by | (pipe)</td><td>Preheat oven|Mix ingredients|Bake 45 min</td></tr>
+            <tr><td>notes</td><td>Optional tips or notes</td><td>Freeze well for up to 3 months</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="cancel-csv-template-btn">Cancel</button>
+        <button class="btn-primary" id="download-template-btn">⬇ Download Template</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="app.js"></script>
 </body>
 </html>

@@ -639,20 +639,21 @@ No explanation, no markdown, just the JSON object.`
           <div class="meal-label">${mealLabel}</div>
           <div class="planner-cells">
             ${weekDates.map(d => {
-              const key = dateKey(d) + '_' + mealId;
-              const entry = plannerData[key];
-              const recipe = entry ? recipes[entry.recipeId] : null;
-              const entryName = recipe ? recipe.name : (entry ? entry.quickText : null);
+              const prefix = dateKey(d) + '_' + mealId + '_';
+              const cellEntries = Object.entries(plannerData)
+                .filter(([k]) => k.startsWith(prefix))
+                .sort((a,b) => a[0].localeCompare(b[0]));
               return `
                 <div class="planner-cell" data-date="${dateKey(d)}" data-meal="${mealId}">
-                  ${entryName ? `
-                    <div class="planner-entry" data-key="${key}">
-                      <span>${entryName}</span>
-                      <button class="remove-plan-btn" data-key="${key}">✕</button>
-                    </div>
-                  ` : `
-                    <button class="add-plan-btn" data-date="${dateKey(d)}" data-meal="${mealId}">+</button>
-                  `}
+                  ${cellEntries.map(([k, entry]) => {
+                    const recipe = recipes[entry.recipeId];
+                    const name = recipe ? recipe.name : '?';
+                    return `<div class="planner-entry" data-key="${k}">
+                      <span>${name}</span>
+                      <button class="remove-plan-btn" data-key="${k}">✕</button>
+                    </div>`;
+                  }).join('')}
+                  <button class="add-plan-btn" data-date="${dateKey(d)}" data-meal="${mealId}">+</button>
                 </div>
               `;
             }).join('')}
@@ -720,7 +721,7 @@ No explanation, no markdown, just the JSON object.`
   document.getElementById('save-planner-btn').addEventListener('click', async () => {
     const recipeId = document.getElementById('planner-recipe-select').value;
     if (!recipeId || !plannerTargetMealId) return;
-    const key = plannerTargetDate + '_' + plannerTargetMealId;
+    const key = plannerTargetDate + '_' + plannerTargetMealId + '_' + Date.now();
     await setDoc(doc(db, 'users', currentUser.uid, 'planner', key), { recipeId, date: plannerTargetDate, meal: plannerTargetMealId });
     document.getElementById('planner-modal').classList.remove('active');
   });
@@ -750,7 +751,7 @@ No explanation, no markdown, just the JSON object.`
       });
     }
 
-    const key = plannerTargetDate + '_' + mealId;
+    const key = plannerTargetDate + '_' + mealId + '_' + Date.now();
     await setDoc(doc(db, 'users', currentUser.uid, 'planner', key), { recipeId, date: plannerTargetDate, meal: mealId });
     document.getElementById('planner-modal').classList.remove('active');
   });
@@ -767,14 +768,17 @@ No explanation, no markdown, just the JSON object.`
     const ingredientMap = {};
     weekDates.forEach(date => {
       MEALS.forEach(({id: mealId}) => {
-        const key = date + '_' + mealId;
-        const entry = plannerData[key];
-        if (entry && recipes[entry.recipeId]) {
-          (recipes[entry.recipeId].ingredients || []).forEach(ing => {
-            const lower = ing.toLowerCase();
-            ingredientMap[lower] = { text: ing, checked: false };
+        const prefix = date + '_' + mealId + '_';
+        Object.entries(plannerData)
+          .filter(([k]) => k.startsWith(prefix))
+          .forEach(([, entry]) => {
+            if (entry && recipes[entry.recipeId]) {
+              (recipes[entry.recipeId].ingredients || []).forEach(ing => {
+                const lower = ing.toLowerCase();
+                ingredientMap[lower] = { text: ing, checked: false };
+              });
+            }
           });
-        }
       });
     });
 

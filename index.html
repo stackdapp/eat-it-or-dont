@@ -236,22 +236,30 @@
       <h2 id="planner-modal-title">Add to Planner</h2>
       <button class="modal-close" id="close-planner-modal">✕</button>
     </div>
-    <div class="form-group">
-      <label>Select Recipe</label>
-      <select id="planner-recipe-select"></select>
+    <div class="modal-tabs">
+      <button class="ptab-btn active" data-ptab="pick-recipe">Pick a Recipe</button>
+      <button class="ptab-btn" data-ptab="quick-text">Quick Text</button>
     </div>
-    <div class="form-group">
-      <label>Meal Time</label>
-      <select id="planner-mealtime-select">
-        <option value="breakfast">Breakfast</option>
-        <option value="lunch">Lunch</option>
-        <option value="dinner" selected>Dinner</option>
-        <option value="snack">Snack</option>
-      </select>
+    <div id="ptab-pick-recipe" class="ptab-content active" style="padding:20px">
+      <div class="form-group">
+        <label>Recipe</label>
+        <select id="planner-recipe-select"></select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="cancel-planner-btn">Cancel</button>
+        <button class="btn-primary" id="save-planner-btn">Add to Plan</button>
+      </div>
     </div>
-    <div class="modal-footer">
-      <button class="btn-secondary" id="cancel-planner-btn">Cancel</button>
-      <button class="btn-primary" id="save-planner-btn">Add to Plan</button>
+    <div id="ptab-quick-text" class="ptab-content" style="padding:20px">
+      <div class="form-group">
+        <label>What are you having?</label>
+        <input type="text" id="quick-text-input" placeholder="e.g. Grilled cheese, Leftovers, Cereal...">
+      </div>
+      <p class="import-note">This will be saved as a recipe so you can add ingredients to it later for your shopping list.</p>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="cancel-planner-btn-2">Cancel</button>
+        <button class="btn-primary" id="save-quick-text-btn">Add to Plan</button>
+      </div>
     </div>
   </div>
 </div>
@@ -556,7 +564,14 @@ No explanation, no markdown, just the JSON object.`
 
   // ── Planner ────────────────────────────────────────────
   const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const MEALS = ['breakfast','lunch','dinner','snack'];
+  const MEALS = [
+    { id: 'lincoln-breakfast', label: 'Lincoln Breakfast' },
+    { id: 'jamie-breakfast',   label: 'Jamie Breakfast' },
+    { id: 'lunch',             label: 'Lunch' },
+    { id: 'dinner',            label: 'Dinner' },
+    { id: 'lincoln-dinner',    label: 'Lincoln Dinner' },
+    { id: 'dessert',           label: 'Dessert' },
+  ];
 
   document.getElementById('prev-week-btn').addEventListener('click', () => {
     currentWeekStart = new Date(currentWeekStart);
@@ -619,23 +634,24 @@ No explanation, no markdown, just the JSON object.`
           </div>
         `).join('')}
       </div>
-      ${MEALS.map(meal => `
+      ${MEALS.map(({id: mealId, label: mealLabel}) => `
         <div class="planner-meal-row">
-          <div class="meal-label">${meal}</div>
+          <div class="meal-label">${mealLabel}</div>
           <div class="planner-cells">
             ${weekDates.map(d => {
-              const key = dateKey(d) + '_' + meal;
+              const key = dateKey(d) + '_' + mealId;
               const entry = plannerData[key];
               const recipe = entry ? recipes[entry.recipeId] : null;
+              const entryName = recipe ? recipe.name : (entry ? entry.quickText : null);
               return `
-                <div class="planner-cell" data-date="${dateKey(d)}" data-meal="${meal}">
-                  ${recipe ? `
+                <div class="planner-cell" data-date="${dateKey(d)}" data-meal="${mealId}">
+                  ${entryName ? `
                     <div class="planner-entry" data-key="${key}">
-                      <span>${recipe.name}</span>
+                      <span>${entryName}</span>
                       <button class="remove-plan-btn" data-key="${key}">✕</button>
                     </div>
                   ` : `
-                    <button class="add-plan-btn" data-date="${dateKey(d)}" data-meal="${meal}">+</button>
+                    <button class="add-plan-btn" data-date="${dateKey(d)}" data-meal="${mealId}">+</button>
                   `}
                 </div>
               `;
@@ -657,17 +673,25 @@ No explanation, no markdown, just the JSON object.`
     });
   }
 
-  function openPlannerModal(date, meal) {
+  function openPlannerModal(date, mealId) {
     plannerTargetDate = date;
+    plannerTargetMealId = mealId;
+    const mealObj = MEALS.find(m => m.id === mealId) || { label: mealId };
     document.getElementById('planner-modal-title').textContent =
-      `Add to ${meal.charAt(0).toUpperCase()+meal.slice(1)} — ${new Date(date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}`;
-    document.getElementById('planner-mealtime-select').value = meal;
+      `${mealObj.label} — ${new Date(date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}`;
+
+    // Reset tabs to recipe tab
+    document.querySelectorAll('#planner-modal .ptab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#planner-modal .ptab-content').forEach(t => t.classList.remove('active'));
+    document.querySelector('#planner-modal .ptab-btn[data-ptab="pick-recipe"]').classList.add('active');
+    document.getElementById('ptab-pick-recipe').classList.add('active');
 
     const sel = document.getElementById('planner-recipe-select');
     sel.innerHTML = Object.entries(recipes)
       .sort((a,b) => a[1].name.localeCompare(b[1].name))
       .map(([id,r]) => `<option value="${id}">${r.name}</option>`).join('');
 
+    document.getElementById('quick-text-input').value = '';
     document.getElementById('planner-modal').classList.add('active');
   }
 
@@ -677,13 +701,57 @@ No explanation, no markdown, just the JSON object.`
   document.getElementById('cancel-planner-btn').addEventListener('click', () => {
     document.getElementById('planner-modal').classList.remove('active');
   });
+  document.getElementById('cancel-planner-btn-2').addEventListener('click', () => {
+    document.getElementById('planner-modal').classList.remove('active');
+  });
+
+  // Tab switching in planner modal
+  document.querySelectorAll('#planner-modal .ptab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#planner-modal .ptab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('#planner-modal .ptab-content').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('ptab-' + btn.dataset.ptab).classList.add('active');
+    });
+  });
+
+  let plannerTargetMealId = null;
 
   document.getElementById('save-planner-btn').addEventListener('click', async () => {
     const recipeId = document.getElementById('planner-recipe-select').value;
-    const meal = document.getElementById('planner-mealtime-select').value;
-    if (!recipeId) return;
-    const key = plannerTargetDate + '_' + meal;
-    await setDoc(doc(db, 'users', currentUser.uid, 'planner', key), { recipeId, date: plannerTargetDate, meal });
+    if (!recipeId || !plannerTargetMealId) return;
+    const key = plannerTargetDate + '_' + plannerTargetMealId;
+    await setDoc(doc(db, 'users', currentUser.uid, 'planner', key), { recipeId, date: plannerTargetDate, meal: plannerTargetMealId });
+    document.getElementById('planner-modal').classList.remove('active');
+  });
+
+  document.getElementById('save-quick-text-btn').addEventListener('click', async () => {
+    const text = document.getElementById('quick-text-input').value.trim();
+    if (!text || !plannerTargetMealId) return;
+    const mealId = plannerTargetMealId;
+
+    // Auto-save as a recipe so it appears in recipe book + shopping list
+    const existingMatch = Object.entries(recipes).find(([,r]) => r.name.toLowerCase() === text.toLowerCase());
+    let recipeId;
+    if (existingMatch) {
+      recipeId = existingMatch[0];
+    } else {
+      recipeId = 'r_' + Date.now();
+      await setDoc(doc(db, 'users', currentUser.uid, 'recipes', recipeId), {
+        name: text,
+        course: 'dinner',
+        servings: 4,
+        prepTime: 0,
+        cookTime: 0,
+        ingredients: [],
+        instructions: [],
+        notes: 'Quick entry — add ingredients to include in shopping list.',
+        createdAt: Date.now()
+      });
+    }
+
+    const key = plannerTargetDate + '_' + mealId;
+    await setDoc(doc(db, 'users', currentUser.uid, 'planner', key), { recipeId, date: plannerTargetDate, meal: mealId });
     document.getElementById('planner-modal').classList.remove('active');
   });
 
@@ -698,8 +766,8 @@ No explanation, no markdown, just the JSON object.`
     // Aggregate ingredients from planned recipes this week
     const ingredientMap = {};
     weekDates.forEach(date => {
-      MEALS.forEach(meal => {
-        const key = date + '_' + meal;
+      MEALS.forEach(({id: mealId}) => {
+        const key = date + '_' + mealId;
         const entry = plannerData[key];
         if (entry && recipes[entry.recipeId]) {
           (recipes[entry.recipeId].ingredients || []).forEach(ing => {
